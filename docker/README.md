@@ -8,7 +8,7 @@ On bash:
 docker run \
   --rm \
   -it \
-  -v path/to/source_code:/src \
+  -v path/to/source_code:/src:rw \
   ghcr.io/wasm-fanclub/sdk:latest \
   bash /src/build.sh
 ```
@@ -18,7 +18,7 @@ On PowerShell:
 docker run `
   --rm `
   -it `
-  -v path/to/source_code:/src `
+  -v path/to/source_code:/src:rw `
   ghcr.io/wasm-fanclub/sdk:latest `
   bash /src/build.sh
 ```
