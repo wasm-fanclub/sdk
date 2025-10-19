@@ -4,6 +4,19 @@ ARG WABT_RELEASE=1.0.37
 ARG WASMTIME_RELEASE=v37.0.2
 
 FROM ghcr.io/webassembly/wasi-sdk:${WASI_SDK_RELEASE} AS wasi
+
+SHELL ["/bin/bash", "-c"]
+RUN set -euxo pipefail && \
+    PROFILE_SCRIPT="/etc/profile.d/wasi-sdk.sh" && \
+    mkdir -p "$(dirname "$PROFILE_SCRIPT")" && \
+    : > "$PROFILE_SCRIPT" && \
+    printenv | grep -v '^PATH=' | sort | while IFS='=' read -r key val; do \
+        [[ -z "$key" || -z "$val" ]] && continue; \
+        val_escaped=$(printf '%s' "$val" | sed 's/\\/\\\\/g; s/"/\\"/g'); \
+        printf 'export %s="%s"\n' "$key" "$val_escaped" >> "$PROFILE_SCRIPT"; \
+    done && \
+    cat "$PROFILE_SCRIPT"
+
 FROM emscripten/emsdk:${EMSDK_RELEASE}
 COPY --from=wasi /opt/wasi-sdk /opt/wasi-sdk
 
@@ -12,11 +25,15 @@ ARG EMSDK_RELEASE
 ARG WABT_RELEASE
 ARG WASMTIME_RELEASE
 
-# WASI and Emscripten already installed. Last ENVs that are needed:
+# WASI already installed. Last ENVs that are needed:
 ENV WASI_SDK_RELEASE=${WASI_SDK_RELEASE}
-ENV EMSDK_RELEASE=${EMSDK_RELEASE}
+
+COPY --from=wasi /etc/profile.d/wasi-sdk.sh /etc/profile.d/wasi-sdk.sh
 
 ENV WASI_SYSROOT=/opt/wasi-sdk/share/wasi-sysroot
+
+# Emscripten already installed. Last ENV that is needed:
+ENV EMSDK_RELEASE=${EMSDK_RELEASE}
 
 # Wasmtime installation
 ENV WASMTIME_RELEASE=${WASMTIME_RELEASE}
@@ -71,8 +88,11 @@ echo -e "\033[1;36mWABT:\033[0m $(which wat2wasm) --version"
 wat2wasm --version
 echo ""
 EOT
+RUN cat /etc/profile.d/zzz-sdk-check.sh | tr -d '\r' > /etc/profile.d/zzz-sdk-check.sh
 
 RUN chmod +x /etc/profile.d/zzz-sdk-check.sh
 RUN bash /etc/profile.d/zzz-sdk-check.sh
 
-ENTRYPOINT ["/bin/bash", "--"]
+WORKDIR /
+
+ENTRYPOINT ["/bin/bash", "--login"]
