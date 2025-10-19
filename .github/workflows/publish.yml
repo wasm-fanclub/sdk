@@ -5,6 +5,7 @@ on:
 permissions:
   contents: read
   packages: write
+  actions: write
 env:
   IMAGE_NAME: sdk
 jobs:
