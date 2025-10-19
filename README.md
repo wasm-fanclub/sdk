@@ -1,3 +1,5 @@
+<img width="757" height="739" alt="image" src="https://github.com/user-attachments/assets/64f0a5a7-a593-4eee-af03-e7dc354bd464" />
+
 # Wasm Fanclub SDK
 An SDK aggregate (EMSDK, WASI-SDK, Wasmtime, and WABT) for building your wasm projects using orchestration
 
