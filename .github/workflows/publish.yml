@@ -37,3 +37,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run dump-test.yml --ref=${{ github.event.release.tag_name }}
+      - name: Pin and Optimize Cloud-Init
+        run: |
+          gh workflow run pin-tag.yml --ref=${{ github.event.release.tag_name }} --field metadata_tag=${{ github.event.release.tag_name }}
