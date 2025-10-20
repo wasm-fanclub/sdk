@@ -43,12 +43,12 @@ packages:
 write_files:
   - path: /etc/cloud/metadata.repo
     content: wasm-fanclub/sdk
-  - path: /etc/cloud/metadata.tag
-    content: v0.2.0-alpha
+  - path: /etc/cloud/metadata.ref
+    content: main
   - path: /opt/init/init.sh
     content: |
       #!/bin/bash
-      read -r UPSTREAM_TAG < /etc/cloud/metadata.tag
+      read -r UPSTREAM_REF < /etc/cloud/metadata.ref
       read -r UPSTREAM_REPO < /etc/cloud/metadata.repo
 
       SCRIPTS=(
@@ -65,7 +65,7 @@ write_files:
         "build-sdk-check.sh"
       )
 
-      BASE_URL="https://raw.githubusercontent.com/$UPSTREAM_REPO/$UPSTREAM_TAG/init"
+      BASE_URL="https://raw.githubusercontent.com/$UPSTREAM_REPO/$UPSTREAM_REF/init"
 
       mkdir -p /opt/init
 
