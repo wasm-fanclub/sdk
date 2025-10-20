@@ -1,6 +1,3 @@
-ARG UPSTREAM_TAG=v0.2.0-alpha
-ARG UPSTREAM_REPO=wasm-fanclub/sdk
-
 ARG WASI_SDK_RELEASE=latest
 ARG EMSDK_RELEASE=latest
 ARG WABT_RELEASE=main
@@ -11,11 +8,6 @@ FROM emscripten/emsdk:${EMSDK_RELEASE}
 COPY --from=wasi /opt/wasi-sdk /opt/wasi-sdk
 
 RUN apt-get update && apt-get install -y clang lld llvm-dev
-
-ARG UPSTREAM_TAG
-ENV UPSTREAM_TAG=${UPSTREAM_TAG}
-ARG UPSTREAM_REPO
-ENV UPSTREAM_REPO=${UPSTREAM_REPO}
 
 ARG WASI_SDK_RELEASE
 ENV WASI_SDK_RELEASE=${WASI_SDK_RELEASE}
