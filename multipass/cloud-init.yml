@@ -1,6 +1,5 @@
 package_update: true
 package_upgrade: true
-
 packages:
   # Required by WASI SDK
   - cmake
@@ -10,27 +9,23 @@ packages:
   - autogen
   - automake
   - libtool
-
   # Required by WASI SDK build script below
   - curl
   - jq
   - ca-certificates
   - wget
   - xz-utils
-
   # Required by WABT build script below
   - git
   - clang
   - lld
   - llvm-dev
-
   # Required by Emscripten SDK for building it
   - binutils
   - build-essential
   - file
   - python3
   - python3-pip
-
   # Required by Emscripten SDK for running it
   - libxml2
   - zip
@@ -39,7 +34,6 @@ packages:
   - ant
   - libidn12
   - openjdk-11-jre-headless
-
 write_files:
   - path: /etc/cloud/metadata.repo
     content: wasm-fanclub/sdk
@@ -87,12 +81,11 @@ write_files:
 
       echo "source /opt/init/tags.env" >> /etc/profile.d/000-tags.env.sh
       bash /etc/profile.d/zzz-sdk-check.sh
-
 runcmd:
   # Handle 'ssh-client' installation separately to avoid cloud-init apt issues
   - apt install -y ssh-client
   - bash /opt/init/init.sh
-  - |
+  - |-
     apt-get -y clean
     apt-get -y autoclean
     apt-get -y autoremove
