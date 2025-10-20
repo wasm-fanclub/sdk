@@ -2,6 +2,13 @@
 
 A cloud-init configuration file for setting up the Wasm Fanclub SDK environment on cloud-init compatible platforms, specifically tested with Multipass.
 
+**Note about release builds:**
+The version provided by the main branch uses curl to download the initialization scripts from the `init/` directory of this repository. To optimize releases, the tags that have a release on GitHub have these files automatically inserted into the cloud-init.yml write-files section. As you can see:
+- [main](https://raw.githubusercontent.com/wasm-fanclub/sdk/main/multipass/cloud-init.yml) - init scripts are downloaded
+- [v0.2.0](https://raw.githubusercontent.com/wasm-fanclub/sdk/v0.2.0/multipass/cloud-init.yml) - init scripts are already included
+
+When using the main branch version, you can update /etc/cloud/metadata.tag to specify a different branch, tag, or commit hash to pull the init scripts from. You can also do the same for metadata.repo to pull from a different repository.
+
 ## Running with Multipass:
 
 After cloning the repository, you can launch a Multipass instance with the Wasm Fanclub SDK environment using the following commands:
