@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 jobs:
-  dump-test:
+  pin-tag:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
