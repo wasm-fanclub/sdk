@@ -10,7 +10,7 @@ jobs:
       image: ghcr.io/${{ github.repository_owner }}/sdk:latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run dump test
         run: |
           export DUMP_ROOT=${{ github.workspace }}/test
