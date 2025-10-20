@@ -30,13 +30,31 @@ After cloning the repository, you can build the Docker image using the following
 On bash:
 ```bash
 cd "$(git rev-parse --show-toplevel)"
-docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile .
+
+BUILD_ARGS=()
+while IFS= read -r line; do
+  line="${line#"${line%%[![:space:]]*}"}" # remove leading
+  line="${line%"${line##*[![:space:]]}"}" # remove trailing
+  [[ -z "$line" ]] && continue            # skip empty lines
+  BUILD_ARGS+=(--build-arg "$line")
+done < init/tags.env
+
+docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile "${BUILD_ARGS[@]}" .
 ```
 
 On PowerShell:
 ```powershell
 cd "$(git rev-parse --show-toplevel)"
-docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile .
+
+$BUILD_ARGS = @()
+cat init/tags.env | ForEach-Object {
+  if (-not [string]::IsNullOrWhiteSpace($_)) {
+    $BUILD_ARGS += "--build-arg"
+    $BUILD_ARGS += "$_".trim()
+  }
+}
+
+docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile @BUILD_ARGS .
 ```
 
 ## Github Actions Usage
