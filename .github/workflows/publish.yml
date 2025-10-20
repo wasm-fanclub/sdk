@@ -24,6 +24,12 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Get Build Arguments
+        run: |
+          BUILD_ARGS=$(cat ./init/tags.env)
+          echo "BUILD_ARGS<<EOF" >> $GITHUB_ENV
+          echo "$BUILD_ARGS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
       - name: Build and Publish Docker Image
         uses: docker/build-push-action@v6
         with:
@@ -32,11 +38,14 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
             ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          build-args: ${{ env.BUILD_ARGS }}
       - name: Dump-test Latest Image
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run dump-test.yml --ref=${{ github.event.release.tag_name }}
       - name: Pin and Optimize Cloud-Init
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run pin-tag.yml --ref=${{ github.event.release.tag_name }} --field metadata_tag=${{ github.event.release.tag_name }}
