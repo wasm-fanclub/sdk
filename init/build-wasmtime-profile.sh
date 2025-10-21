@@ -7,4 +7,4 @@ PROFILE_SCRIPT=/etc/profile.d/wasmtime.sh
 : > $PROFILE_SCRIPT
 
 echo "export WASMTIME_HOME=$WASMTIME_HOME" >> $PROFILE_SCRIPT
-echo 'export PATH="$WASMTIME_HOME/bin:$PATH"' >> $PROFILE_SCRIPT
+echo 'if [[ ":$PATH:" != *":$WASMTIME_HOME/bin:"* ]]; then export PATH="$WASMTIME_HOME/bin:$PATH"; fi' >> $PROFILE_SCRIPT
