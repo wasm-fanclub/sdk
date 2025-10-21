@@ -77,6 +77,9 @@ void siglongjmp(jmp_buf env, int val) {
 }
 EOF
 
+# Compile intermediate C to WASI WASM
+mkdir -p "$OUT_DIRECTORY/wasi"
+
 clang --target=wasm32-wasi --sysroot=$WASI_SYSROOT \
   "$MD_C_FILENAME" "$WABT_HOME/wasm2c/wasm-rt-impl.c" "shim.c" \
   -D_WASI_EMULATED_MMAN \
@@ -87,6 +90,7 @@ clang --target=wasm32-wasi --sysroot=$WASI_SYSROOT \
 
 # Compile basic C to core WASM
 mkdir -p "$OUT_DIRECTORY/wasm"
+mkdir -p "$OUT_DIRECTORY/emcc"
 clang --target=wasm32-unknown-unknown \
   "$IN_C_FILENAME" \
   -nostdlib -Wl,--no-entry -Wl,--export-all \
