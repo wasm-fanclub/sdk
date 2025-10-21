@@ -3,12 +3,12 @@ name: Pin and Optimize Cloud-Init
 on:
   workflow_dispatch:
     inputs:
-      metadata_tag:
+      metadata_ref:
         description: 'Release tag to pin'
         required: true
 
 env:
-  METADATA_TAG: ${{ github.event.inputs.metadata_tag }}
+  METADATA_REF: ${{ github.event.inputs.metadata_ref }}
 
 permissions:
   contents: write
@@ -32,13 +32,13 @@ jobs:
 
           wget https://github.com/mikefarah/yq/releases/download/${VERSION}/yq_${PLATFORM} -O /usr/local/bin/yq &&\
           chmod +x /usr/local/bin/yq
-      - name: Bump Cloud-Init Tag
+      - name: Bump Cloud-Init Ref
         run: |
-          yq -i '(.write_files[] | select(.path == "/etc/cloud/metadata.tag")).content = strenv(METADATA_TAG)' multipass/cloud-init.yml
+          yq -i '(.write_files[] | select(.path == "/etc/cloud/metadata.ref")).content = strenv(METADATA_REF)' multipass/cloud-init.yml
       - name: Commit and Push changes
         run: |
           git add multipass/cloud-init.yml
-          git commit -m "Pin cloud-init metadata tag to ${METADATA_TAG}" || echo "No changes to commit"
+          git commit -m "Pin cloud-init metadata ref to ${METADATA_REF}" || echo "No changes to commit"
           git push origin main || true
       - name: Optimize /opt/init Scripts
         run: |
@@ -64,6 +64,6 @@ jobs:
         run: |
           git checkout --detach
           git add multipass/cloud-init.yml
-          git commit -m "Optimize /opt/init scripts and pin metadata tag to ${METADATA_TAG}"
-          git tag -f ${METADATA_TAG}
-          git push origin -f ${METADATA_TAG}
+          git commit -m "Optimize /opt/init scripts and pin metadata ref to ${METADATA_REF}"
+          git tag -f ${METADATA_REF}
+          git push origin -f ${METADATA_REF}
