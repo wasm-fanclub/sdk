@@ -58,8 +58,8 @@ RUN bash /opt/init/install-wabt.sh
 
 COPY ./init/build-sdk-check.sh /opt/init/build-sdk-check.sh
 RUN sed -i 's/\r$//' /opt/init/build-sdk-check.sh
-RUN bash /opt/init/build-sdk-check.sh && bash /etc/profile.d/zzz-sdk-check.sh
+RUN bash /opt/init/build-sdk-check.sh && bash /etc/profile.d/zzz-sdk-check.sh --login -c "true"
 
 WORKDIR /
 
-ENTRYPOINT ["/bin/bash", "--login"]
+ENTRYPOINT ["/bin/bash", "--login", "-c"]
