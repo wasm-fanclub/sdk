@@ -1,5 +1,6 @@
 name: Publish SDK
 on:
+  workflow_dispatch:
   release:
     types: [published]
 permissions:
@@ -47,6 +48,14 @@ jobs:
       - name: Inject new PATH
         run: |
           sed -i "/^ENTRYPOINT/i ENV PATH=${{ env.AGGREGATED_PATH }}" docker/Dockerfile
+      - name: Set Image Tags
+        run: |
+          echo "IMAGE_TAGS<<EOF" >> $GITHUB_ENV
+          echo "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name || 'test-ignore' }}" >> $GITHUB_ENV
+          if [ "${{ github.event.release.tag_name }}" != "" ]; then
+            echo "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+          fi
+          echo "EOF" >> $GITHUB_ENV
       - name: Build and Publish Docker Image
         uses: docker/build-push-action@v6
         with:
@@ -54,15 +63,14 @@ jobs:
           context: .
           file: docker/Dockerfile
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_TAGS }}
           build-args: |
             ${{ env.BUILD_ARGS }}
       - name: Dump-test Latest Image
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run dump-test.yml --ref=${{ github.event.release.tag_name || github.ref_name }}
+          gh workflow run dump-test.yml --ref=${{ github.event.release.tag_name || github.ref_name }} --field tag=${{ github.event.release.tag_name || 'test-ignore' }}
       - name: Pin and Optimize Cloud-Init
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
