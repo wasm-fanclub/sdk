@@ -62,6 +62,21 @@ emcc "$MD_C_FILENAME" "$WABT_HOME/wasm2c/wasm-rt-impl.c" \
   -s EXPORTED_RUNTIME_METHODS='["cwrap"]' \
   -O2 -g2
 
+cat <<EOF > shim.c
+#include <setjmp.h>
+
+// WASI doesn’t support POSIX signals, so these are thin aliases.
+
+int sigsetjmp(jmp_buf env, int savesigs) {
+    (void)savesigs;  // ignore the signal mask flag
+    return setjmp(env);
+}
+
+void siglongjmp(jmp_buf env, int val) {
+    longjmp(env, val);
+}
+EOF
+
 clang --target=wasm32-wasi --sysroot=$WASI_SYSROOT \
   "$MD_C_FILENAME" "$WABT_HOME/wasm2c/wasm-rt-impl.c" "shim.c" \
   -D_WASI_EMULATED_MMAN \
