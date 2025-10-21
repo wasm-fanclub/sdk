@@ -77,4 +77,5 @@ jobs:
         run: |
           gh workflow run pin-tag.yml --ref=${{ github.event.release.tag_name || github.ref_name }} \
             --field metadata_ref=${{ github.event.release.tag_name || github.ref_name }} \
+            --field path=${{ env.AGGREGATED_PATH }} \
             --field publish=${{ github.event.release.tag_name != '' && 'true' || 'false' }}

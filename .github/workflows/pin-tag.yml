@@ -1,10 +1,13 @@
-name: Pin and Optimize Cloud-Init
+name: Pin and Optimize Cloud-Init and Dockerfile
 
 on:
   workflow_dispatch:
     inputs:
       metadata_ref:
         description: 'Release tag to pin'
+        required: true
+      path:
+        description: 'PATH value to set in Dockerfile'
         required: true
       publish:
         description: 'Publish updated tag'
@@ -13,6 +16,7 @@ on:
 
 env:
   METADATA_REF: ${{ github.event.inputs.metadata_ref }}
+  AGGREGATED_PATH: ${{ github.event.inputs.path }}
 
 permissions:
   contents: write
@@ -64,15 +68,22 @@ jobs:
             yq -i \
               "(.write_files[] | select(.path == \"/opt/init/$script\") | .content) style=\"literal\"" multipass/cloud-init.yml
           done
+      - name: Inject new PATH
+        run: |
+          sed -i "/^ENTRYPOINT/i ENV PATH=${{ env.AGGREGATED_PATH }}" docker/Dockerfile
       - name: Force point tag to a headless commit
         if: ${{ github.event.inputs.publish }}
         run: |
           git checkout --detach
           git add multipass/cloud-init.yml
-          git commit -m "Optimize /opt/init scripts and pin metadata ref to ${METADATA_REF}"
+          git add docker/Dockerfile
+          git commit -m "Optimize cloud-init.yml and Dockerfile per ${METADATA_REF}"
           git tag -f ${METADATA_REF}
           git push origin -f ${METADATA_REF}
       - name: Dump results
         run: |
           echo "Cloud-Init YAML:"
           cat multipass/cloud-init.yml
+          echo ""
+          echo "Dockerfile:"
+          cat docker/Dockerfile
