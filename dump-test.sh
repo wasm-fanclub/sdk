@@ -1,4 +1,7 @@
+#!/bin/bash
 set -euo pipefail
+
+source /etc/profile
 
 : ${DUMP_ROOT:=$HOME}
 IN_DIRECTORY="src"
