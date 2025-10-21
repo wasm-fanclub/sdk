@@ -2,12 +2,17 @@ name: Dump Test
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to test'
+        required: false
+        default: 'latest'
 
 jobs:
   dump-test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository_owner }}/sdk:latest
+      image: ghcr.io/${{ github.repository_owner }}/sdk:${{ github.event.inputs.tag || 'latest' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
