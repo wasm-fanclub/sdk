@@ -62,15 +62,13 @@ emcc "$MD_C_FILENAME" "$WABT_HOME/wasm2c/wasm-rt-impl.c" \
   -s EXPORTED_RUNTIME_METHODS='["cwrap"]' \
   -O2 -g2
 
-# Compile intermediate C to WASI WASM
-mkdir -p "$OUT_DIRECTORY/wasi"
 clang --target=wasm32-wasi --sysroot=$WASI_SYSROOT \
-  "$MD_C_FILENAME" "$WABT_HOME/wasm2c/wasm-rt-impl.c" \
+  "$MD_C_FILENAME" "$WABT_HOME/wasm2c/wasm-rt-impl.c" "shim.c" \
   -D_WASI_EMULATED_MMAN \
   -I$WABT_HOME/wasm2c \
-  -o "$OUT_DIRECTORY/wasi/$OUT_WASM_FILENAME" \
-  -mllvm -wasm-enable-sjlj -lwasi-emulated-mman \
-  -O2
+  -Wl,--no-entry -Wl,--export-all \
+  -mllvm -wasm-enable-sjlj -lwasi-emulated-mman -O2 \
+  -o output/wasi/output.wasm
 
 # Compile basic C to core WASM
 mkdir -p "$OUT_DIRECTORY/wasm"
