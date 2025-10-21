@@ -81,6 +81,258 @@ write_files:
 
       echo "source /opt/init/tags.env" >> /etc/profile.d/000-tags.env.sh
       bash /etc/profile.d/zzz-sdk-check.sh
+  - path: /opt/init/env-profile.sh
+    content: |-
+      #!/bin/bash
+      if [[ $# -lt 2 ]]; then
+        echo "Usage: $0 <profile-name> <dockerfile-url>"
+        exit 1
+      fi
+
+      PROFILE_NAME="$1"
+      DOCKERFILE_URL="$2"
+      PROFILE_SCRIPT="/etc/profile.d/${PROFILE_NAME}.sh"
+
+      DOCKERFILE_ENVS="$(
+          curl -s "$DOCKERFILE_URL" |
+          awk '
+              /^ENV / {
+                  line = $0
+                  while (sub(/\\$/, "", line)) {
+                      getline cont
+                      sub(/^[[:space:]]*/, "", cont)
+                      line = line "\nENV " cont
+                  }
+                  print line
+              }
+          '
+      )"
+
+      : > $PROFILE_SCRIPT
+
+      printf '%s\n' "$DOCKERFILE_ENVS" | while read -r line; do
+          # Skip empty lines
+          [[ -z "$line" ]] && continue
+
+          # Extract key and value — handle both `KEY VALUE` and `KEY=VALUE`
+          rest="${line#ENV }"
+          if [[ "$rest" =~ ^([^[:space:]=]+)[[:space:]]+(.*)$ ]]; then
+              key="${BASH_REMATCH[1]}"
+              val="${BASH_REMATCH[2]}"
+          elif [[ "$rest" =~ ^([^=]+)=(.*)$ ]]; then
+              key="${BASH_REMATCH[1]}"
+              val="${BASH_REMATCH[2]}"
+          else
+              continue
+          fi
+
+          # Handle PATH specially: don't expand or eval
+          if [[ "$key" == "PATH" ]]; then
+              # Write literal, preserve any $PATH reference as-is
+              printf 'export PATH=%s\n' "$val" >> $PROFILE_SCRIPT
+          else
+              # Expand variable only if not already set
+              eval "export $key=\"\${$key:-$val}\""
+              printf 'export %s="%s"\n' "$key" "$(printenv "$key" || echo "")" >> $PROFILE_SCRIPT
+          fi
+      done
+
+      echo $PROFILE_SCRIPT
+  - path: /opt/init/tags.env
+    content: |-
+      WASI_SDK_RELEASE=wasi-sdk-27
+      EMSDK_RELEASE=4.0.16
+      WASMTIME_RELEASE=v37.0.2
+      WABT_RELEASE=1.0.37
+  - path: /opt/init/build-wasi-profile.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+
+      PROFILE_NAME=wasi-sdk
+      UPSTREAM_REPO=WebAssembly/wasi-sdk
+
+      URL_PATH="$UPSTREAM_REPO/$WASI_SDK_RELEASE/docker/Dockerfile"
+
+      BASE_URL="https://raw.githubusercontent.com"
+      DOCKERFILE_URL="$BASE_URL/$URL_PATH"
+
+      PROFILE_SCRIPT=$(bash /opt/init/env-profile.sh "$PROFILE_NAME" "$DOCKERFILE_URL")
+
+      echo 'export WASI_SYSROOT="/opt/wasi-sdk/share/wasi-sysroot"' >> $PROFILE_SCRIPT
+      echo 'if [[ ":$PATH:" != *":/opt/wasi-sdk/bin:"* ]]; then export PATH="/opt/wasi-sdk/bin:$PATH"; fi' >> $PROFILE_SCRIPT
+  - path: /opt/init/build-emcc-profile.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+
+      PROFILE_NAME=emcc-sdk
+      UPSTREAM_REPO=emscripten-core/emsdk
+
+      URL_PATH="$UPSTREAM_REPO/$EMSDK_RELEASE/docker/Dockerfile"
+
+      BASE_URL="https://raw.githubusercontent.com"
+      DOCKERFILE_URL="$BASE_URL/$URL_PATH"
+
+      PROFILE_SCRIPT=$(bash /opt/init/env-profile.sh "$PROFILE_NAME" "$DOCKERFILE_URL")
+  - path: /opt/init/build-wasmtime-profile.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+
+      WASMTIME_HOME="/opt/wasmtime"
+
+      PROFILE_SCRIPT=/etc/profile.d/wasmtime.sh
+      : > $PROFILE_SCRIPT
+
+      echo "export WASMTIME_HOME=$WASMTIME_HOME" >> $PROFILE_SCRIPT
+      echo 'if [[ ":$PATH:" != *":$WASMTIME_HOME/bin:"* ]]; then export PATH="$WASMTIME_HOME/bin:$PATH"; fi' >> $PROFILE_SCRIPT
+  - path: /opt/init/build-wabt-profile.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+
+      WABT_HOME="/opt/wabt"
+
+      PROFILE_SCRIPT=/etc/profile.d/wabt.sh
+      : > $PROFILE_SCRIPT
+
+      echo "export WABT_HOME=$WABT_HOME" >> $PROFILE_SCRIPT
+      echo 'if [[ ":$PATH:" != *":$WABT_HOME/bin:"* ]]; then export PATH="$WABT_HOME/bin:$PATH"; fi' >> $PROFILE_SCRIPT
+  - path: /opt/init/install-wasi-sdk.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+      export PROFILE="/etc/profile.d/wasi-sdk.sh"
+
+      source $PROFILE
+
+      ARCH=$(dpkg --print-architecture)
+      if [ "$ARCH" = "amd64" ]; then
+          ARCH="x86_64"
+      fi
+
+      UPSTREAM_REPO="WebAssembly/wasi-sdk"
+      API_PATH="repos/$UPSTREAM_REPO/releases/tags/$WASI_SDK_RELEASE"
+      API_BASE="https://api.github.com"
+
+      API_URL="$API_BASE/$API_PATH"
+      API_RESPONSE=$(curl -sL "$API_URL")
+
+      JQ_FILTER='.assets[] | select(.name | test("\($arch)-linux\\.deb$"))'
+      JQ_QUERY="$JQ_FILTER | .browser_download_url"
+
+      DOWNLOAD_URL=$(echo "$API_RESPONSE" | jq -r --arg arch "$ARCH" "$JQ_QUERY")
+
+      echo "Installing WASI SDK"
+      echo "- Release: $WASI_SDK_RELEASE"
+      echo "- Arch: $ARCH"
+      echo "- Download URL: $DOWNLOAD_URL"
+
+      wget "$DOWNLOAD_URL" -O /tmp/wasi-sdk.deb
+      dpkg -i /tmp/wasi-sdk.deb || apt-get -f install -y
+      rm /tmp/wasi-sdk.deb
+  - path: /opt/init/install-emcc-sdk.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+      export PROFILE="/etc/profile.d/emcc-sdk.sh"
+
+      source $PROFILE
+
+      UPSTREAM_REPO="emscripten-core/emsdk"
+
+      git clone "https://github.com/$UPSTREAM_REPO" "$EMSDK" \
+          --branch "$EMSDK_RELEASE" \
+          --depth 1
+
+      cd "$EMSDK"
+      ./emsdk install "$EMSDK_RELEASE"
+      ./emsdk activate "$EMSDK_RELEASE"
+
+      chmod 777 ${EMSDK}/upstream/emscripten
+      chmod -R 777 ${EMSDK}/upstream/emscripten/cache
+      echo "int main() { return 0; }" > hello.c
+      ${EMSDK}/upstream/emscripten/emcc hello.c
+      cat ${EMSDK}/upstream/emscripten/cache/sanity.txt
+
+      source ${EMSDK}/emsdk_env.sh
+      strip -s `which node`
+      rm -rf ${EMSDK}/upstream/emscripten/tests
+      find ${EMSDK}/upstream/emscripten -type f -exec strip -s {} + || true
+
+      sudo chmod -R a+w ${EMSDK}/upstream/emscripten/cache
+  - path: /opt/init/install-wasmtime.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+      export PROFILE="/etc/profile.d/wasmtime.sh"
+      export HOME=${HOME:-/root}
+
+      source $PROFILE
+
+      curl -fsSL https://wasmtime.dev/install.sh | bash -s -- --version "$WASMTIME_RELEASE"
+  - path: /opt/init/install-wabt.sh
+    content: |-
+      #!/bin/bash
+      source /opt/init/tags.env
+      export PROFILE="/etc/profile.d/wabt.sh"
+
+      source $PROFILE
+
+      # temporarily override WASI SDK CC/CXX to use system clang for WABT build
+      export CC=/usr/bin/clang
+      export CXX=/usr/bin/clang++
+      export AR=/usr/bin/llvm-ar
+      export RANLIB=/usr/bin/llvm-ranlib
+      export LD=/usr/bin/ld.lld
+
+      UPSTREAM_REPO="WebAssembly/wabt"
+      git clone "https://github.com/$UPSTREAM_REPO" "$WABT_HOME" \
+          --branch "$WABT_RELEASE" \
+          --depth 1
+
+      cd "$WABT_HOME"
+      git submodule update --init --recursive
+
+      WABT_BUILD_ARGS="-DBUILD_TESTS=OFF \
+          -DWITH_WASI=ON \
+          -DFETCHCONTENT_FULLY_DISCONNECTED=OFF \
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_VERBOSE_MAKEFILE=ON \
+          -Wno-dev \
+          -DBUILD_TESTING=OFF"
+
+      cmake $WABT_BUILD_ARGS -DCMAKE_INSTALL_PREFIX=$WABT_HOME/bin
+      cmake -S . -B build $WABT_BUILD_ARGS -DCMAKE_INSTALL_PREFIX=$WABT_HOME/bin
+      cmake --build build
+      cmake --install build
+  - path: /opt/init/build-sdk-check.sh
+    content: |-
+      #!/bin/bash
+      PROFILE_SCRIPT=/etc/profile.d/zzz-sdk-check.sh
+
+      cat << 'EOF' > $PROFILE_SCRIPT
+      #!/usr/bin/env bash
+      echo ""
+      echo ""
+      echo -e "\033[1;33mSystem clang:\033[0m $(env -i bash --norc --noprofile -c "which clang") --version"
+      env -i bash --norc --noprofile -c "clang --version"
+      echo ""
+      echo -e "\033[1;31mWASI SDK:\033[0m $(which clang) --version"
+      clang --version
+      echo ""
+      echo -e "\033[1;31mEmscripten SDK:\033[0m $(which emcc) --version"
+      emcc --version
+      echo ""
+      echo -e "\033[1;36mWasmtime:\033[0m $(which wasmtime) --version"
+      wasmtime --version
+      echo ""
+      echo -e "\033[1;36mWABT:\033[0m $(which wat2wasm) --version"
+      wat2wasm --version
+      echo ""
+      EOF
 runcmd:
   # Handle 'ssh-client' installation separately to avoid cloud-init apt issues
   - apt install -y ssh-client

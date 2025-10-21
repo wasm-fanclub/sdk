@@ -62,4 +62,5 @@ RUN bash /opt/init/build-sdk-check.sh && bash /etc/profile.d/zzz-sdk-check.sh --
 
 WORKDIR /
 
+ENV PATH=/opt/wasmtime/bin:/opt/wasi-sdk/bin:/opt/wabt/bin:/emsdk:/emsdk/upstream/emscripten:/emsdk/node/22.16.0_64bit/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENTRYPOINT ["/bin/bash", "--login", "-c"]
