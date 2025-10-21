@@ -47,9 +47,14 @@ Note that precedence is generally wasmtime > wasi-sdk > wabt > emsdk > system. T
 
 ## GitHub Actions Usage
 Since the spec for [action.yml does not support volume mounts](https://docs.github.com/en/actions/reference/workflows-and-actions/metadata-syntax#runs-for-docker-container-actions), we do not provide one.
-- The concern and consideration for this was the fact that without volume mounts, you would have to clone the repository again inside the container in order to work with it, which is inefficient. Efficiency is important when considering GitHub Actions' usage limits.
+- The concern and consideration for this was the fact that without volume mounts, you would have to clone the repository again inside the container to work with it (which is inefficient). Efficiency is important when using GitHub Actions considering usage limits.
 
 Instead, we recommend you use the [jobs in a container API](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/run-jobs-in-a-container). Here is an example workflow snippet:
+- NOTE: To ensure that all environment variables and PATH modifications are applied correctly, we recommend:
+  - using `bash --login -eo pipefail` as a default shell (see example below)
+  - source `/etc/profile` in applicable `run` commands
+  - source the applicable `/etc/profile.d` scripts directly, if needed
+    - NOTE: since the base image is the EMSDK, the `/etc/profile.d/emcc-sdk.sh` does not exist and is effectively always sourced 
 
 ```yaml
 jobs:
@@ -57,6 +62,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/wasm-fanclub/sdk:latest
+    defaults:
+      run:
+        shell: bash --login -eo pipefail {0}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
