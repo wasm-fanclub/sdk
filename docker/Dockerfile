@@ -44,8 +44,6 @@ COPY ./init/build-wasmtime-profile.sh /opt/init/build-wasmtime-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-wasmtime-profile.sh
 RUN bash /opt/init/build-wasmtime-profile.sh
 
-RUN echo "export PATH=\$WASMTIME_HOME/bin:\$PATH" >> /etc/profile.d/wasmtime.sh
-
 COPY ./init/build-wabt-profile.sh /opt/init/build-wabt-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-wabt-profile.sh
 RUN bash /opt/init/build-wabt-profile.sh
