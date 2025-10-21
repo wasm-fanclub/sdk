@@ -39,7 +39,7 @@ while IFS= read -r line; do
   BUILD_ARGS+=(--build-arg "$line")
 done < init/tags.env
 
-docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile "${BUILD_ARGS[@]}" .
+docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile "${BUILD_ARGS[@]}" . # --progress=plain
 ```
 
 On PowerShell:
@@ -54,7 +54,7 @@ cat init/tags.env | ForEach-Object {
   }
 }
 
-docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile @BUILD_ARGS .
+docker build -t ghcr.io/wasm-fanclub/sdk:latest -f docker/Dockerfile @BUILD_ARGS . # --progress=plain
 ```
 
 ## Github Actions Usage
