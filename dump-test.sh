@@ -86,7 +86,7 @@ clang --target=wasm32-wasi --sysroot=$WASI_SYSROOT \
   -I$WABT_HOME/wasm2c \
   -Wl,--no-entry -Wl,--export-all \
   -mllvm -wasm-enable-sjlj -lwasi-emulated-mman -O2 \
-  -o $OUT_DIRECTORY/wasi/output.wasm
+  -o $OUT_DIRECTORY/wasi/$OUT_WASM_FILENAME
 
 # Compile basic C to core WASM
 mkdir -p "$OUT_DIRECTORY/wasm"
