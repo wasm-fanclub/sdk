@@ -6,6 +6,10 @@ on:
       metadata_ref:
         description: 'Release tag to pin'
         required: true
+      publish:
+        description: 'Publish updated tag'
+        type: boolean
+        default: false
 
 env:
   METADATA_REF: ${{ github.event.inputs.metadata_ref }}
@@ -61,9 +65,14 @@ jobs:
               "(.write_files[] | select(.path == \"/opt/init/$script\") | .content) style=\"literal\"" multipass/cloud-init.yml
           done
       - name: Force point tag to a headless commit
+        if: ${{ github.event.inputs.publish }}
         run: |
           git checkout --detach
           git add multipass/cloud-init.yml
           git commit -m "Optimize /opt/init scripts and pin metadata ref to ${METADATA_REF}"
           git tag -f ${METADATA_REF}
           git push origin -f ${METADATA_REF}
+      - name: Dump results
+        run: |
+          echo "Cloud-Init YAML:"
+          cat multipass/cloud-init.yml
