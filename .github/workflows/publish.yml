@@ -43,7 +43,7 @@ jobs:
       - name: Get PATH from intermediate image
         id: get-path
         run: |
-          LAST_LINE=$(docker run --rm ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:intermediate "printenv PATH" | tail -n 1)
+          LAST_LINE=$(docker run --rm ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:intermediate "source /etc/profile.d/init/all.sh && printenv PATH" | tail -n 1)
           echo "AGGREGATED_PATH=$LAST_LINE" >> $GITHUB_ENV
       - name: Inject new PATH
         run: |
