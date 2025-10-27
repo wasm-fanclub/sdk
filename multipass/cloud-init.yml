@@ -71,7 +71,6 @@ write_files:
       BASE_URL="https://raw.githubusercontent.com/$UPSTREAM_REPO/$UPSTREAM_REF/init"
 
       mkdir -p /opt/init
-      mkdir -p /opt/profile.d/init
 
       for script in "${SCRIPTS[@]}"; do
         TARGET="/opt/init/$script"
