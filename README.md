@@ -52,9 +52,7 @@ Since the spec for [action.yml does not support volume mounts](https://docs.gith
 Instead, we recommend you use the [jobs in a container API](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/run-jobs-in-a-container). Here is an example workflow snippet:
 - NOTE: To ensure that all environment variables and PATH modifications are applied correctly, we recommend:
   - using `bash --login -eo pipefail` as a default shell (see example below)
-  - source `/etc/profile` in applicable `run` commands
-  - source the applicable `/etc/profile.d` scripts directly, if needed
-    - NOTE: since the base image is the EMSDK, the `/etc/profile.d/emcc-sdk.sh` does not exist and is effectively always sourced 
+  - source the applicable `/etc/profile.d/init` scripts as necessary per run
 
 ```yaml
 jobs:
