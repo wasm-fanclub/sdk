@@ -67,19 +67,8 @@ COPY ./init/build-profile.sh /opt/init/build-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-profile.sh
 RUN bash /opt/init/build-profile.sh
 
-COPY ./init/install-wasmtime.sh /opt/init/install-wasmtime.sh
-RUN sed -i 's/\r$//' /opt/init/install-wasmtime.sh
-RUN bash /opt/init/install-wasmtime.sh
-
-COPY ./init/install-wabt.sh /opt/init/install-wabt.sh
-RUN sed -i 's/\r$//' /opt/init/install-wabt.sh
-RUN bash /opt/init/install-wabt.sh
-
 RUN echo "## Update and install packages" \
     && apt-get -qq -y update \
-    # Somewhere in here apt sets up tzdata which asks for your time zone and blocks
-    # waiting for the answer which you can't give as docker build doesn't read from
-    # the terminal. The env vars set here avoid the interactive prompt and set the TZ.
     && DEBIAN_FRONTEND="noninteractive" TZ="America/San_Francisco" apt-get -qq install -y --no-install-recommends \
         sudo \
         libxml2 \
@@ -98,9 +87,17 @@ RUN echo "## Update and install packages" \
         ant \
         libidn12 \
         cmake \
-        openjdk-11-jre-headless \
-    # Standard Cleanup on Debian images
-    && apt-get -y clean \
+        openjdk-11-jre-headless
+
+COPY ./init/install-wasmtime.sh /opt/init/install-wasmtime.sh
+RUN sed -i 's/\r$//' /opt/init/install-wasmtime.sh
+RUN bash /opt/init/install-wasmtime.sh
+
+COPY ./init/install-wabt.sh /opt/init/install-wabt.sh
+RUN sed -i 's/\r$//' /opt/init/install-wabt.sh
+RUN bash /opt/init/install-wabt.sh
+
+RUN apt-get -y clean \
     && apt-get -y autoclean \
     && apt-get -y autoremove \
     && rm -rf /var/lib/apt/lists/* \
