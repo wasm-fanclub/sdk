@@ -1,4 +1,6 @@
 #!/bin/bash
+set -eou pipefail
+
 if [[ $# -lt 2 ]]; then
   echo "Usage: $0 <profile-name> <dockerfile-url>"
   exit 1
@@ -7,6 +9,8 @@ fi
 PROFILE_NAME="$1"
 DOCKERFILE_URL="$2"
 PROFILE_SCRIPT="/etc/profile.d/init/${PROFILE_NAME}.sh"
+
+mkdir -p "$(dirname "$PROFILE_SCRIPT")"
 
 DOCKERFILE_ENVS="$(
     curl -s "$DOCKERFILE_URL" |
@@ -52,15 +56,16 @@ printf '%s\n' "$DOCKERFILE_ENVS" | while read -r line; do
         seen_path=false
 
         for seg in "${segments[@]}"; do
+            seg="${seg//\"/}"
+            seg="${seg//\'/}"
+            seg="${seg// /}"
+
             [[ -z "$seg" ]] && continue
             if [[ "$seg" == "__PATH_MARKER__" ]]; then
                 seen_path=true
                 continue
             fi
 
-            seg="${seg//\"/}"
-            seg="${seg//\'/}"
-            seg="${seg// /}"
             if ! $seen_path; then
                 before_path+=("$seg")
             else
@@ -68,20 +73,21 @@ printf '%s\n' "$DOCKERFILE_ENVS" | while read -r line; do
             fi
         done
 
-        for seg in "${before_path[@]}"; do
+        for (( idx=${#before_path[@]}-1 ; idx>=0 ; idx-- )); do
+            seg="${before_path[idx]}"
             [[ -z "$seg" ]] && continue
-            printf 'if [[ ":$PATH:" != *":%s:"* ]]; then export PATH="%s:$PATH"; fi\n' "$seg" "$seg" >> $PROFILE_SCRIPT
+            printf 'if [[ ":$PATH:" != *":%s:"* ]]; then export PATH="%s:$PATH"; fi\n' "$seg" "$seg" >> "$PROFILE_SCRIPT"
         done
 
         for seg in "${after_path[@]}"; do
             [[ -z "$seg" ]] && continue
-            printf 'if [[ ":$PATH:" != *":%s:"* ]]; then export PATH="$PATH:%s"; fi\n' "$seg" "$seg" >> $PROFILE_SCRIPT
+            printf 'if [[ ":$PATH:" != *":%s:"* ]]; then export PATH="$PATH:%s"; fi\n' "$seg" "$seg" >> "$PROFILE_SCRIPT"
         done
     else
         # Expand variable only if not already set
         eval "export $key=\"\${$key:-$val}\""
-        printf 'export %s="%s"\n' "$key" "$(printenv "$key" || echo "")" >> $PROFILE_SCRIPT
+        printf 'export %s="%s"\n' "$key" "$(printenv "$key" || echo "")" >> "$PROFILE_SCRIPT"
     fi
 done
 
-echo $PROFILE_SCRIPT
+echo "$PROFILE_SCRIPT"
