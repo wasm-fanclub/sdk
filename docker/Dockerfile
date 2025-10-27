@@ -96,6 +96,10 @@ RUN echo "## Update and install packages" \
     && rm -rf /usr/share/man/??_* \
     && echo "## Done"
 
+COPY ./init/sdk-check.sh /opt/init/sdk-check.sh
+RUN sed -i 's/\r$//' /opt/init/sdk-check.sh
+RUN bash /opt/init/sdk-check.sh
+
 WORKDIR /
 
 ENTRYPOINT ["/bin/bash", "--login", "-c"]

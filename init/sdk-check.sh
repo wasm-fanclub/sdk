@@ -1,8 +1,9 @@
-#!/bin/bash
-PROFILE_SCRIPT=/etc/profile.d/zzz-sdk-check.sh
-
-cat << 'EOF' > $PROFILE_SCRIPT
 #!/usr/bin/env bash
+source /etc/profile.d/init/wasi-sdk.sh
+source /etc/profile.d/init/emsdk.sh
+source /etc/profile.d/init/wasmtime.sh
+source /etc/profile.d/init/wabt.sh
+
 echo ""
 echo ""
 echo -e "\033[1;33mSystem clang:\033[0m $(env -i bash --norc --noprofile -c "which clang") --version"
@@ -20,4 +21,3 @@ echo ""
 echo -e "\033[1;36mWABT:\033[0m $(which wat2wasm) --version"
 wat2wasm --version
 echo ""
-EOF

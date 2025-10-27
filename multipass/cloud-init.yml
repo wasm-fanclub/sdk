@@ -62,7 +62,7 @@ write_files:
         "install-emcc-sdk.sh"
         "install-wasmtime.sh"
         "install-wabt.sh"
-        "build-sdk-check.sh"
+        "sdk-check.sh"
       )
 
       BASE_URL="https://raw.githubusercontent.com/$UPSTREAM_REPO/$UPSTREAM_REF/init"
