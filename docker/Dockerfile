@@ -53,6 +53,18 @@ COPY ./init/build-wabt-profile.sh /opt/init/build-wabt-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-wabt-profile.sh
 RUN bash /opt/init/build-wabt-profile.sh
 
+COPY ./init/build-system-profile.sh /opt/init/build-system-profile.sh
+RUN sed -i 's/\r$//' /opt/init/build-system-profile.sh
+RUN bash /opt/init/build-system-profile.sh
+
+COPY ./init/build-all-profile.sh /opt/init/build-all-profile.sh
+RUN sed -i 's/\r$//' /opt/init/build-all-profile.sh
+RUN bash /opt/init/build-all-profile.sh
+
+COPY ./init/build-profile.sh /opt/init/build-profile.sh
+RUN sed -i 's/\r$//' /opt/init/build-profile.sh
+RUN bash /opt/init/build-profile.sh
+
 COPY ./init/install-wasmtime.sh /opt/init/install-wasmtime.sh
 RUN sed -i 's/\r$//' /opt/init/install-wasmtime.sh
 RUN bash /opt/init/install-wasmtime.sh
