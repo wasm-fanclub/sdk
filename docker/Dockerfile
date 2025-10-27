@@ -3,9 +3,12 @@ ARG EMSDK_RELEASE=latest
 ARG WABT_RELEASE=main
 ARG WASMTIME_RELEASE=latest
 
-FROM ghcr.io/webassembly/wasi-sdk:${WASI_SDK_RELEASE} AS wasi
-FROM emscripten/emsdk:${EMSDK_RELEASE}
-COPY --from=wasi /opt/wasi-sdk /opt/wasi-sdk
+FROM ghcr.io/webassembly/wasi-sdk:${WASI_SDK_RELEASE} AS wasi_sdk
+FROM emscripten/emsdk:${EMSDK_RELEASE} AS emsdk
+
+FROM ubuntu:24.04
+COPY --from=wasi_sdk /opt/wasi-sdk /opt/wasi-sdk
+COPY --from=emsdk /emsdk /opt/emsdk
 
 RUN apt-get update && apt-get install -y clang lld llvm-dev
 
@@ -35,8 +38,10 @@ COPY ./init/build-wasi-profile.sh /opt/init/build-wasi-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-wasi-profile.sh
 RUN bash /opt/init/build-wasi-profile.sh
 
-# Emscripten already installed, and ENV vars are inherited
-# - no additional steps needed
+# Emscripten already installed, but we need to set ENV vars
+COPY ./init/build-emsdk-profile.sh /opt/init/build-emsdk-profile.sh
+RUN sed -i 's/\r$//' /opt/init/build-emsdk-profile.sh
+RUN bash /opt/init/build-emsdk-profile.sh
 
 # Wasmtime and WABT installation
 
@@ -56,9 +61,40 @@ COPY ./init/install-wabt.sh /opt/init/install-wabt.sh
 RUN sed -i 's/\r$//' /opt/init/install-wabt.sh
 RUN bash /opt/init/install-wabt.sh
 
-COPY ./init/build-sdk-check.sh /opt/init/build-sdk-check.sh
-RUN sed -i 's/\r$//' /opt/init/build-sdk-check.sh
-RUN bash /opt/init/build-sdk-check.sh && bash --login -c "true"
+RUN echo "## Update and install packages" \
+    && apt-get -qq -y update \
+    # Somewhere in here apt sets up tzdata which asks for your time zone and blocks
+    # waiting for the answer which you can't give as docker build doesn't read from
+    # the terminal. The env vars set here avoid the interactive prompt and set the TZ.
+    && DEBIAN_FRONTEND="noninteractive" TZ="America/San_Francisco" apt-get -qq install -y --no-install-recommends \
+        sudo \
+        libxml2 \
+        ca-certificates \
+        python3 \
+        python3-pip \
+        wget \
+        curl \
+        zip \
+        unzip \
+        git \
+        git-lfs \
+        ssh-client \
+        build-essential \
+        make \
+        ant \
+        libidn12 \
+        cmake \
+        openjdk-11-jre-headless \
+    # Standard Cleanup on Debian images
+    && apt-get -y clean \
+    && apt-get -y autoclean \
+    && apt-get -y autoremove \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/debconf/*-old \
+    && rm -rf /usr/share/doc/* \
+    && rm -rf /usr/share/man/?? \
+    && rm -rf /usr/share/man/??_* \
+    && echo "## Done"
 
 WORKDIR /
 
