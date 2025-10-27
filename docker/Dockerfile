@@ -10,7 +10,30 @@ FROM ubuntu:24.04
 COPY --from=wasi_sdk /opt/wasi-sdk /opt/wasi-sdk
 COPY --from=emsdk /emsdk /opt/emsdk
 
-RUN apt-get update && apt-get install -y clang lld llvm-dev
+RUN echo "## Update and install packages" \
+    && apt-get -qq -y update \
+    && DEBIAN_FRONTEND="noninteractive" TZ="America/San_Francisco" apt-get -qq install -y --no-install-recommends \
+        clang \
+        lld \
+        llvm-dev \
+        sudo \
+        libxml2 \
+        ca-certificates \
+        python3 \
+        python3-pip \
+        wget \
+        curl \
+        zip \
+        unzip \
+        git \
+        git-lfs \
+        ssh-client \
+        build-essential \
+        make \
+        ant \
+        libidn12 \
+        cmake \
+        openjdk-11-jre-headless
 
 ARG WASI_SDK_RELEASE
 ENV WASI_SDK_RELEASE=${WASI_SDK_RELEASE}
@@ -33,8 +56,6 @@ EOF
 RUN sed -i 's/\r$//' /opt/init/tags.env
 
 # WASI-SDK already installed, but we need to set ENV vars
-
-RUN mkdir -p /etc/profile.d/init
 
 COPY ./init/build-wasi-sdk-profile.sh /opt/init/build-wasi-sdk-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-wasi-sdk-profile.sh
@@ -66,28 +87,6 @@ RUN bash /opt/init/build-all-profile.sh
 COPY ./init/build-profile.sh /opt/init/build-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-profile.sh
 RUN bash /opt/init/build-profile.sh
-
-RUN echo "## Update and install packages" \
-    && apt-get -qq -y update \
-    && DEBIAN_FRONTEND="noninteractive" TZ="America/San_Francisco" apt-get -qq install -y --no-install-recommends \
-        sudo \
-        libxml2 \
-        ca-certificates \
-        python3 \
-        python3-pip \
-        wget \
-        curl \
-        zip \
-        unzip \
-        git \
-        git-lfs \
-        ssh-client \
-        build-essential \
-        make \
-        ant \
-        libidn12 \
-        cmake \
-        openjdk-11-jre-headless
 
 COPY ./init/install-wasmtime.sh /opt/init/install-wasmtime.sh
 RUN sed -i 's/\r$//' /opt/init/install-wasmtime.sh
