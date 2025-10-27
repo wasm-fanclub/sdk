@@ -1,6 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
-export PROFILE="/etc/profile.d/wabt.sh"
+export PROFILE="/etc/profile.d/init/wabt.sh"
 
 source $PROFILE
 

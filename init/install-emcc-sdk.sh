@@ -1,6 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
-export PROFILE="/etc/profile.d/emcc-sdk.sh"
+export PROFILE="/etc/profile.d/init/emsdk.sh"
 
 source $PROFILE
 

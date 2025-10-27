@@ -1,6 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
-export PROFILE="/etc/profile.d/wasmtime.sh"
+export PROFILE="/etc/profile.d/init/wasmtime.sh"
 export HOME=${HOME:-/root}
 
 source $PROFILE

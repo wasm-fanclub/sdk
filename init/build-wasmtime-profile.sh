@@ -3,7 +3,7 @@ source /opt/init/tags.env
 
 WASMTIME_HOME="/opt/wasmtime"
 
-PROFILE_SCRIPT=/etc/profile.d/wasmtime.sh
+PROFILE_SCRIPT=/etc/profile.d/init/wasmtime.sh
 : > $PROFILE_SCRIPT
 
 echo "export WASMTIME_HOME=$WASMTIME_HOME" >> $PROFILE_SCRIPT

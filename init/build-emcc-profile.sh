@@ -1,7 +1,7 @@
 #!/bin/bash
 source /opt/init/tags.env
 
-PROFILE_NAME=emcc-sdk
+PROFILE_NAME=emsdk
 UPSTREAM_REPO=emscripten-core/emsdk
 
 URL_PATH="$UPSTREAM_REPO/$EMSDK_RELEASE/docker/Dockerfile"

@@ -1,6 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
-export PROFILE="/etc/profile.d/wasi-sdk.sh"
+export PROFILE="/etc/profile.d/init/wasi-sdk.sh"
 
 source $PROFILE
 

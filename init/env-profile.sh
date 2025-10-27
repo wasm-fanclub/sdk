@@ -6,7 +6,7 @@ fi
 
 PROFILE_NAME="$1"
 DOCKERFILE_URL="$2"
-PROFILE_SCRIPT="/etc/profile.d/${PROFILE_NAME}.sh"
+PROFILE_SCRIPT="/etc/profile.d/init/${PROFILE_NAME}.sh"
 
 DOCKERFILE_ENVS="$(
     curl -s "$DOCKERFILE_URL" |
