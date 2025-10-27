@@ -34,6 +34,8 @@ RUN sed -i 's/\r$//' /opt/init/tags.env
 
 # WASI-SDK already installed, but we need to set ENV vars
 
+RUN mkdir -p /etc/profile.d/init
+
 COPY ./init/build-wasi-sdk-profile.sh /opt/init/build-wasi-sdk-profile.sh
 RUN sed -i 's/\r$//' /opt/init/build-wasi-sdk-profile.sh
 RUN bash /opt/init/build-wasi-sdk-profile.sh
