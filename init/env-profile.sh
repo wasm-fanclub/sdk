@@ -43,8 +43,40 @@ printf '%s\n' "$DOCKERFILE_ENVS" | while read -r line; do
 
     # Handle PATH specially: don't expand or eval
     if [[ "$key" == "PATH" ]]; then
-        # Write literal, preserve any $PATH reference as-is
-        printf 'export PATH=%s\n' "$val" >> $PROFILE_SCRIPT
+        val="${val//'${PATH}'/\$PATH}"
+        val="${val//'$PATH'/"__PATH_MARKER__"}"
+        IFS=':' read -ra segments <<< "$val"
+
+        before_path=()
+        after_path=()
+        seen_path=false
+
+        for seg in "${segments[@]}"; do
+            [[ -z "$seg" ]] && continue
+            if [[ "$seg" == "__PATH_MARKER__" ]]; then
+                seen_path=true
+                continue
+            fi
+
+            seg="${seg//\"/}"
+            seg="${seg//\'/}"
+            seg="${seg// /}"
+            if ! $seen_path; then
+                before_path+=("$seg")
+            else
+                after_path+=("$seg")
+            fi
+        done
+
+        for seg in "${before_path[@]}"; do
+            [[ -z "$seg" ]] && continue
+            printf 'if [[ ":$PATH:" != *":%s:"* ]]; then export PATH="%s:$PATH"; fi\n' "$seg" "$seg" >> $PROFILE_SCRIPT
+        done
+
+        for seg in "${after_path[@]}"; do
+            [[ -z "$seg" ]] && continue
+            printf 'if [[ ":$PATH:" != *":%s:"* ]]; then export PATH="$PATH:%s"; fi\n' "$seg" "$seg" >> $PROFILE_SCRIPT
+        done
     else
         # Expand variable only if not already set
         eval "export $key=\"\${$key:-$val}\""
