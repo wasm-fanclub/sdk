@@ -88,9 +88,6 @@ write_files:
         fi
       done
 
-      echo "source /opt/init/tags.env" >> /etc/profile.d/000-tags.env.sh
-      bash /etc/profile.d/zzz-sdk-check.sh
-
 runcmd:
   # Handle 'ssh-client' installation separately to avoid cloud-init apt issues
   - apt install -y ssh-client
