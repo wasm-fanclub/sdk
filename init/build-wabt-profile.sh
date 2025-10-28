@@ -1,5 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
+set -eou pipefail
 
 WABT_HOME="/opt/wabt"
 

@@ -1,5 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
+set -eou pipefail
 
 PROFILE_NAME=wasi-sdk
 UPSTREAM_REPO=WebAssembly/wasi-sdk

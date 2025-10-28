@@ -1,5 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
+set -eou pipefail
 export PROFILE="/etc/profile.d/init/emsdk.sh"
 
 source $PROFILE

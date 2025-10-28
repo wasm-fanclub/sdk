@@ -1,5 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
+set -eou pipefail
 
 WASMTIME_HOME="/opt/wasmtime"
 
