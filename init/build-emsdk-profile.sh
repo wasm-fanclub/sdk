@@ -1,5 +1,6 @@
 #!/bin/bash
 source /opt/init/tags.env
+set -eou pipefail
 
 PROFILE_NAME=emsdk
 UPSTREAM_REPO=emscripten-core/emsdk
@@ -14,7 +15,7 @@ PROFILE_SCRIPT=$(bash /opt/init/env-profile.sh "$PROFILE_NAME" "$DOCKERFILE_URL"
 EMSDK="/opt/emsdk"
 
 # Cleanup and set EMSDK path
-awk '
+awk -v EMSDK="$EMSDK" '
 /^export[[:space:]]+EMSDK=/ {
   if (!done) {
     print "export EMSDK=\"'"$EMSDK"'\"";
@@ -22,7 +23,18 @@ awk '
   }
   next;
 }
-{ print }
+{
+  line = $0;
+  # Replace any /emsdk or /emsdk/... that begins at the root (start or after non-path char)
+  while (match(line, /(^|[^[:alnum:]_\/])(\/emsdk)(\/[^[:space:]]*)?/)) {
+    prefix = substr(line, 1, RSTART - 1);
+    matched = substr(line, RSTART, RLENGTH);
+    suffix = substr(line, RSTART + RLENGTH);
+    sub(/\/emsdk/, EMSDK, matched);
+    line = prefix matched suffix;
+  }
+  print line;
+}
 ' "${PROFILE_SCRIPT}" | tee "${PROFILE_SCRIPT}.tmp" > /dev/null
 mv "${PROFILE_SCRIPT}.tmp" "${PROFILE_SCRIPT}"
 
